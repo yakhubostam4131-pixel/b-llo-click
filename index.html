@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bülloş Clicker</title>
+<style>
+:root{--bg:#0f1220;--card:#191e31;--card2:#20263d;--text:#f5f7ff;--muted:#aeb6d0;--accent:#7c5cff;--good:#38d39f;--danger:#ff6874}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#252b4a,#0f1220 55%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:900px;margin:auto;padding:20px}.panel,.card{background:rgba(25,30,49,.94);border:1px solid #343b59;border-radius:18px;padding:18px;box-shadow:0 10px 30px #0003}
+.top{text-align:center}.emoji{font-size:45px}.world{font-size:20px;font-weight:800}.money{font-size:48px;font-weight:900;margin:5px 0}.muted{color:var(--muted)}
+.click{margin-top:16px;width:100%;min-height:105px;border:0;border-radius:22px;background:linear-gradient(135deg,#7c5cff,#a36cff);color:white;font-size:29px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px #7c5cff55}
+.click:active,.btn:active{transform:scale(.97)}.stats{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}.card h3{margin:0 0 5px}.btn{width:100%;min-height:48px;margin-top:10px;border:1px solid #424b70;border-radius:12px;background:var(--card2);color:var(--text);font-weight:800;cursor:pointer}.btn:disabled{opacity:.35;cursor:not-allowed}
+.worlds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.worldBtn.active{outline:2px solid var(--accent)}.rebirth{border-color:#694cff;background:#292044}.reset{margin-top:12px;color:#ff9da5}
+.log{margin-top:12px;text-align:center;min-height:24px;color:var(--good)}
+@media(max-width:650px){.grid,.worlds{grid-template-columns:1fr}.money{font-size:38px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="panel top">
+    <div class="emoji" id="worldEmoji">🌍</div>
+    <div class="world" id="worldName">Dünya 1 — Bülloş Dünyası</div>
+    <div class="money" id="money">0</div>
+    <div class="muted">Bülloş</div>
+    <div class="stats">
+      <span>⚡ <b id="rate">0</b>/sn</span>
+      <span>👆 <b id="clickPower">1</b>/tık</span>
+      <span>♻️ <b id="rebirths">0</b> Rebirth</span>
+      <span>✨ <b id="mult">x1.00</b></span>
+    </div>
+    <button class="click" id="clickBtn">BÜLLOŞ! 💰</button>
+    <div class="log" id="log">Bülloş toplamaya başla!</div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h3>🌍 Dünyalar</h3>
+    <div class="muted">Yeni dünyalar Rebirth ile açılır.</div>
+    <div class="worlds">
+      <button class="btn worldBtn active" id="world1">🌍 Dünya 1<br><small>Başlangıç</small></button>
+      <button class="btn worldBtn" id="world2">🌙 Dünya 2<br><small>3 Rebirth</small></button>
+      <button class="btn worldBtn" id="world3">🔥 Dünya 3<br><small>10 Rebirth</small></button>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h3>🌱 Bülloş Tarlası</h3><div class="muted">+1 Bülloş/sn · Sahip: <b id="farmCount">0</b></div>
+      <button class="btn" id="farmBtn">Satın al — 10 🪙</button>
+    </div>
+    <div class="card">
+      <h3>🏭 Bülloş Fabrikası</h3><div class="muted">+5 Bülloş/sn · Sahip: <b id="factoryCount">0</b></div>
+      <button class="btn" id="factoryBtn">Satın al — 75 🪙</button>
+    </div>
+    <div class="card">
+      <h3>⛏️ Bülloş Madeni</h3><div class="muted">+25 Bülloş/sn · Sahip: <b id="mineCount">0</b></div>
+      <button class="btn" id="mineBtn">Satın al — 500 🪙</button>
+    </div>
+    <div class="card">
+      <h3>🤖 Bülloş Robotu</h3><div class="muted">+125 Bülloş/sn · Sahip: <b id="robotCount">0</b></div>
+      <button class="btn" id="robotBtn">Satın al — 3000 🪙</button>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h3>⚡ Tıklama Gücü</h3><div class="muted">Her yükseltmede 2 kat güç.</div>
+      <button class="btn" id="upgradeBtn">Yükselt — 25 🪙</button>
+    </div>
+    <div class="card">
+      <h3>♻️ Rebirth</h3>
+      <div class="muted">Mevcut Bülloş: <b id="rebirthMoney">0</b></div>
+      <div class="muted">Gereken: <b id="rebirthNeed">10.000</b></div>
+      <button class="btn rebirth" id="rebirthBtn">REBiRTH</button>
+    </div>
+  </section>
+
+  <button class="btn reset" id="resetBtn">🔄 Tüm ilerlemeyi sıfırla</button>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const SAVE_KEY="bullos-clicker-save-v1";
+const worldData=[
+  {name:"Dünya 1 — Bülloş Dünyası",emoji:"🌍",mult:1,req:0},
+  {name:"Dünya 2 — Ay Bülloşları",emoji:"🌙",mult:10,req:3},
+  {name:"Dünya 3 — Ateş Bülloşları",emoji:"🔥",mult:100,req:10}
+];
+
+let state={
+  money:0,power:1,rebirths:0,world:0,
+  farm:0,factory:0,mine:0,robot:0,
+  prices:[10,75,500,3000],upgradePrice:25
+};
+
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.floor(n).toLocaleString("tr-TR");
+
+function save(){ localStorage.setItem(SAVE_KEY,JSON.stringify(state)); }
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SAVE_KEY));
+    if(s && typeof s==="object"){
+      state={...state,...s};
+      if(!Array.isArray(state.prices)||state.prices.length!==4) state.prices=[10,75,500,3000];
+    }
+  }catch(e){}
+}
+function permanentBonus(){return 1+state.rebirths*0.25}
+function totalMultiplier(){return worldData[state.world].mult*permanentBonus()}
+function productionBase(){return state.farm+state.factory*5+state.mine*25+state.robot*125}
+function production(){return productionBase()*totalMultiplier()}
+function clickValue(){return state.power*permanentBonus()}
+function rebirthNeed(){return Math.floor(10000*Math.pow(2,state.rebirths))}
+
+function setLog(t){$("log").textContent=t}
+
+function render(){
+  const w=worldData[state.world];
+  $("worldEmoji").textContent=w.emoji;
+  $("worldName").textContent=w.name;
+  $("money").textContent=fmt(state.money);
+  $("rate").textContent=fmt(production());
+  $("clickPower").textContent=fmt(clickValue());
+  $("rebirths").textContent=state.rebirths;
+  $("mult").textContent="x"+totalMultiplier().toFixed(2);
+  $("rebirthMoney").textContent=fmt(state.money);
+  $("rebirthNeed").textContent=fmt(rebirthNeed());
+
+  $("farmCount").textContent=state.farm;
+  $("factoryCount").textContent=state.factory;
+  $("mineCount").textContent=state.mine;
+  $("robotCount").textContent=state.robot;
+
+  const names=["farmBtn","factoryBtn","mineBtn","robotBtn"];
+  names.forEach((id,i)=>{
+    $(id).textContent="Satın al — "+fmt(state.prices[i])+" 🪙";
+    $(id).disabled=state.money<state.prices[i];
+  });
+
+  $("upgradeBtn").textContent="Yükselt — "+fmt(state.upgradePrice)+" 🪙";
+  $("upgradeBtn").disabled=state.money<state.upgradePrice;
+  $("rebirthBtn").disabled=state.money<rebirthNeed();
+
+  $("world1").disabled=false;
+  $("world2").disabled=state.rebirths<3;
+  $("world3").disabled=state.rebirths<10;
+  ["world1","world2","world3"].forEach((id,i)=>$(id).classList.toggle("active",state.world===i));
+}
+
+function buy(index){
+  const p=state.prices[index];
+  if(state.money<p)return;
+  state.money-=p;
+  if(index===0)state.farm++;
+  if(index===1)state.factory++;
+  if(index===2)state.mine++;
+  if(index===3)state.robot++;
+  state.prices[index]=Math.ceil(p*1.15);
+  setLog("Satın alındı! Üretimin arttı. 🚀");
+  save();render();
+}
+
+$("clickBtn").addEventListener("click",()=>{
+  state.money+=clickValue();
+  setLog("+"+fmt(clickValue())+" Bülloş! 💰");
+  save();render();
+});
+
+$("farmBtn").addEventListener("click",()=>buy(0));
+$("factoryBtn").addEventListener("click",()=>buy(1));
+$("mineBtn").addEventListener("click",()=>buy(2));
+$("robotBtn").addEventListener("click",()=>buy(3));
+
+$("upgradeBtn").addEventListener("click",()=>{
+  if(state.money<state.upgradePrice)return;
+  state.money-=state.upgradePrice;
+  state.power*=2;
+  state.upgradePrice=Math.ceil(state.upgradePrice*2);
+  setLog("Tıklama gücü 2 katına çıktı! ⚡");
+  save();render();
+});
+
+$("rebirthBtn").addEventListener("click",()=>{
+  const need=rebirthNeed();
+  if(state.money<need)return;
+  state.rebirths++;
+  state.money=0;
+  state.power=1;
+  state.farm=0;state.factory=0;state.mine=0;state.robot=0;
+  state.prices=[10,75,500,3000];
+  state.upgradePrice=25;
+  setLog("REBIRTH! Kalıcı bonusun arttı. ♻️");
+  save();render();
+});
+
+function changeWorld(i){
+  if(state.rebirths<worldData[i].req){
+    setLog("Bu dünya için "+worldData[i].req+" Rebirth gerekiyor. 🔒");
+    return;
+  }
+  state.world=i;
+  setLog(worldData[i].emoji+" "+worldData[i].name+" açıldı!");
+  save();render();
+}
+$("world1").addEventListener("click",()=>changeWorld(0));
+$("world2").addEventListener("click",()=>changeWorld(1));
+$("world3").addEventListener("click",()=>changeWorld(2));
+
+$("resetBtn").addEventListener("click",()=>{
+  if(!confirm("Tüm ilerleme silinsin mi?"))return;
+  localStorage.removeItem(SAVE_KEY);
+  state={
+    money:0,power:1,rebirths:0,world:0,
+    farm:0,factory:0,mine:0,robot:0,
+    prices:[10,75,500,3000],upgradePrice:25
+  };
+  setLog("Oyun sıfırlandı.");
+  render();
+});
+
+let last=performance.now();
+function loop(now){
+  const dt=Math.min((now-last)/1000,1);
+  last=now;
+  const gain=production();
+  if(gain>0)state.money+=gain*dt;
+  render();
+  requestAnimationFrame(loop);
+}
+
+load();
+render();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
